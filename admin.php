@@ -16,7 +16,7 @@ if ($conn->connect_error) {
 // Habilitar CORS solo para tu aplicación Blazor WebAssembly
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     // Respuesta preflight para solicitudes CORS
-    header("Access-Control-Allow-Origin: http://localhost:5017");
+    header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type, Authorization");
     header("Access-Control-Max-Age: 3600");
@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Permitir solicitudes desde tu aplicación Blazor WebAssembly
-header("Access-Control-Allow-Origin: http://localhost:5017");
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
@@ -127,3 +127,4 @@ echo json_encode($response);
 // Cerrar la conexión a la base de datos
 $conn->close();
 ?>
+

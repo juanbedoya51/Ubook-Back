@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (isset($_GET['id'])) {
         // Obtener un usuario por ID
         $id = $_GET['id'];
-        $sql = "SELECT ID, nombre, correo, fecha_nacimiento FROM usuario WHERE ID = $id";
+        $sql = "SELECT * FROM usuario WHERE ID = $id";
         $result = $conn->query($sql);
 
         if ($result->num_rows > 0) {
@@ -43,27 +43,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $response['data'] = $result->fetch_assoc();
         }
     } else {
-        // Obtener todos los usuario
-        $sql = "SELECT ID, nombre, correo, fecha_nacimiento FROM usuario";
+        // Obtener todos los usuarios
+        $sql = "SELECT * FROM usuario";
         $result = $conn->query($sql);
 
         if ($result->num_rows > 0) {
-            $usuario = array();
+            $usuarios = array();
             while ($row = $result->fetch_assoc()) {
-                $usuario[] = $row;
+                $usuarios[] = $row;
             }
             $response['status'] = 'success';
             $response['message'] = '';
-            $response['data'] = $usuario;
+            $response['data'] = $usuarios;
         }
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Manejo de solicitud POST (Crear un nuevo usuario)
     $data = json_decode(file_get_contents("php://input"), true);
+    $dni = $data['dni'];
     $nombre = $data['nombre'];
+    $apellido = $data['apellido'];
     $correo = $data['correo'];
     $contrasena = $data['contrasena'];
     $fechaNacimiento = $data['fecha_nacimiento'];
+    $lugarNacimiento = $data['lugar_nacimiento'];
+    $genero = $data['genero'];
+    $direccion = $data['direccion'];
 
     // Verificar edad del usuario (mayor de 14 años)
     $fechaActual = new DateTime();
@@ -73,17 +78,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($edad > 14) {
         // Verificar requisitos de complejidad de la contraseña
         if (verificarRequisitosContrasena($contrasena)) {
-            $hashedPassword = password_hash($contrasena, PASSWORD_DEFAULT);
+            $hashedPassword = $contrasena;
 
-            $sql = "INSERT INTO usuario (nombre, correo, contrasena, fecha_nacimiento) 
-                    VALUES ('$nombre', '$correo', '$hashedPassword', '$fechaNacimiento')";
+            $sql = "INSERT INTO usuario (dni, nombre, apellido, correo, contrasena, fecha_nacimiento, lugar_nacimiento, genero, direccion) 
+                    VALUES ('$dni', '$nombre', '$apellido', '$correo', '$hashedPassword', '$fechaNacimiento', '$lugarNacimiento', '$genero', '$direccion')";
 
             if ($conn->query($sql) === TRUE) {
                 $response['status'] = 'success';
                 $response['message'] = 'Usuario creado con éxito';
 
                 // Consultar y devolver la información del usuario recién creado
-                $sql = "SELECT ID, nombre, correo, fecha_nacimiento FROM usuario WHERE ID = " . $conn->insert_id;
+                $sql = "SELECT * FROM usuario WHERE ID = " . $conn->insert_id;
                 $result = $conn->query($sql);
                 if ($result->num_rows > 0) {
                     $response['data'] = $result->fetch_assoc();
@@ -98,16 +103,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     // Manejo de solicitud PUT (Actualizar un usuario por su ID)
     $data = json_decode(file_get_contents("php://input"), true);
-    if (isset($data['ID'])) {
-        $id = $data['ID'];
-    }
-    if (isset($data['id'])) {
-        $id = $data['id'];
-    }
+    $id = $data['ID'];
+    $dni = $data['dni'];
     $nombre = $data['nombre'];
+    $apellido = $data['apellido'];
     $correo = $data['correo'];
     $contrasena = $data['contrasena'];
     $fechaNacimiento = $data['fecha_nacimiento'];
+    $lugarNacimiento = $data['lugar_nacimiento'];
+    $genero = $data['genero'];
+    $direccion = $data['direccion'];
 
     // Verificar edad del usuario (mayor de 14 años)
     $fechaActual = new DateTime();
@@ -117,9 +122,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($edad > 14) {
         // Verificar requisitos de complejidad de la contraseña
         if (verificarRequisitosContrasena($contrasena)) {
-            $hashedPassword = password_hash($contrasena, PASSWORD_DEFAULT);
+            $hashedPassword = $contrasena;
 
-            $sql = "UPDATE usuario SET nombre = '$nombre', correo = '$correo', contrasena = '$hashedPassword', fecha_nacimiento = '$fechaNacimiento'
+            $sql = "UPDATE usuario 
+                    SET dni = '$dni', nombre = '$nombre', apellido = '$apellido', correo = '$correo', contrasena = '$hashedPassword',
+                        fecha_nacimiento = '$fechaNacimiento', lugar_nacimiento = '$lugarNacimiento', genero = '$genero', direccion = '$direccion' 
                     WHERE ID = $id";
 
             if ($conn->query($sql) === TRUE) {
@@ -127,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $response['message'] = 'Usuario actualizado con éxito';
 
                 // Consultar y devolver la información del usuario actualizado
-                $sql = "SELECT ID, nombre, correo, fecha_nacimiento FROM usuario WHERE ID = $id";
+                $sql = "SELECT * FROM usuario WHERE ID = $id";
                 $result = $conn->query($sql);
                 if ($result->num_rows > 0) {
                     $response['data'] = $result->fetch_assoc();

@@ -5,6 +5,10 @@ $username = "root";
 $password = "";
 $database = "Ubook";
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 // Conexión a la base de datos
 $conn = new mysqli($servername, $username, $password, $database);
 
@@ -16,7 +20,7 @@ if ($conn->connect_error) {
 // Habilitar CORS solo para tu aplicación Blazor WebAssembly
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     // Respuesta preflight para solicitudes CORS
-    header("Access-Control-Allow-Origin: http://localhost:5017");
+    header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type, Authorization");
     header("Access-Control-Max-Age: 3600");
@@ -24,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Permitir solicitudes desde tu aplicación Blazor WebAssembly
-header("Access-Control-Allow-Origin: http://localhost:5017");
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
@@ -164,9 +168,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // Manejo de solicitud DELETE (Eliminar un libro por su ID)
     $id = $_GET['id'];
     // Verificar si el libro no está reservado ni vendido
-    $checkSql = "SELECT * FROM libros WHERE ID = $id AND (estado = 'Disponible' OR estado IS NULL) AND vendido = 'No' AND reservado = 'No'";
+    $checkSql = "SELECT * FROM libros WHERE ID = $id AND (estado = 'Disponible' OR estado IS NULL)";
     $checkResult = $conn->query($checkSql);
-    
+
     if ($checkResult->num_rows > 0) {
         $sql = "DELETE FROM libros WHERE ID = $id";
         if ($conn->query($sql) === TRUE) {

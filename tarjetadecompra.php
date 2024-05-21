@@ -13,6 +13,21 @@ if ($conn->connect_error) {
     die("Error de conexión a la base de datos: " . $conn->connect_error);
 }
 
+// Habilitar CORS solo para tu aplicación Blazor WebAssembly
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    // Respuesta preflight para solicitudes CORS
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    header("Access-Control-Max-Age: 3600");
+    exit; // No proceses la solicitud en este caso
+}
+
+// Permitir solicitudes desde tu aplicación Blazor WebAssembly
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
 // Respuesta por defecto
 $response = array('status' => 'error', 'message' => 'Acción no válida');
 
@@ -42,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                         $tarjetas[] = $row;
                     }
                     $response['status'] = 'success';
-                    $response['message'] = '';
+                    $response['message'] = 'Tarjetas de crédito recuperadas con éxito';
                     $response['data'] = $tarjetas;
                 }
             } else {
@@ -66,6 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $saldo = $data['saldo'];
     $cvc = $data['cvc'];
     
+    
+
     // Utilizar una consulta preparada para evitar inyección SQL
     $sql = "INSERT INTO tarjetcompra (id_usuario, numero, fecha_vencimiento, titular, saldo, cvc) VALUES (?, ?, ?, ?, ?, ?)";
     
@@ -80,6 +97,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if ($stmt->execute()) {
             $response['status'] = 'success';
             $response['message'] = 'Tarjeta de crédito creada con éxito';
+            
+            // Obtener el ID de la tarjeta recién creada
+            $tarjeta_id = $stmt->insert_id;
+            
+            // Agregar datos de la tarjeta a la respuesta
+            $response['data'] = array(
+                'id_usuario' => $user_id,
+                'numero' => $numero,
+                'fecha_vencimiento' => $fecha_vencimiento,
+                'titular' => $titular,
+                'saldo' => $saldo,
+                'cvc' => $cvc
+            );
         } else {
             $response['message'] = 'Error al ejecutar la consulta: ' . $stmt->error;
         }
@@ -91,20 +121,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     // Manejo de solicitud DELETE (Eliminar tarjeta de crédito por su ID)
-    $data = json_decode(file_get_contents("php://input"), true);
-    
-    if (isset($data['id_usuario'])) {
-        $id_usuario = $data['id_usuario'];
+    if (isset($_GET['id'])) {
+        $id = $_GET['id'];
         
         // Utiliza una consulta preparada para evitar inyección SQL
-        $sql = "DELETE FROM tarjetcompra WHERE id_usuario = ?";
+        $sql = "DELETE FROM tarjetcompra WHERE id_tarjeta = ?";
         
         // Prepara la consulta
         $stmt = $conn->prepare($sql);
         
         if ($stmt) {
             // Vincula el parámetro id_usuario
-            $stmt->bind_param("i", $id_usuario);
+            $stmt->bind_param("i", $id);
             
             // Ejecuta la consulta
             if ($stmt->execute()) {
@@ -131,3 +159,4 @@ echo json_encode($response);
 // Cerrar la conexión a la base de datos
 $conn->close();
 ?>
+
